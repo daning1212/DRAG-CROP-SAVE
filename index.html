@@ -1,0 +1,66 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>영상 쓱 자르기</title><style>:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#202820;background:#f6f7f2}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:auto;padding:32px 28px}header{display:flex;justify-content:space-between;align-items:center;color:#747d72;font-size:14px}.brand{font-size:20px;font-weight:800;color:#233b29}.intro{margin:65px 0 32px}.intro small{letter-spacing:3px;color:#65815b;font-weight:700}h1{font-size:clamp(32px,5vw,52px);line-height:1.25;letter-spacing:-2px;margin:16px 0}p{line-height:1.7;color:#737a70}.upload{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:2px dashed #b8c5b0;border-radius:20px;padding:32px;background:#fff;cursor:pointer;font-weight:700;font-size:20px}.upload span{font-size:13px;font-weight:400;color:#798071}.upload input{position:absolute;width:1px;height:1px;opacity:0}.upload:focus-within{outline:3px solid #69875a}#editor{background:white;border:1px solid #dfe5d9;border-radius:20px;margin-top:24px;padding:22px}.heading{display:flex;gap:16px;justify-content:space-between;margin-bottom:18px;font-size:14px;overflow-wrap:anywhere}.heading span{color:#7c8577}.workspace{background:#172119;border-radius:14px;display:flex;justify-content:center;padding:20px}.stage{position:relative;max-width:100%;line-height:0;touch-action:none}.stage video{display:block;max-width:100%;max-height:480px;width:auto;height:auto}#overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}.controls{display:flex;align-items:center;gap:14px;margin:18px 0}.controls input{flex:1;min-width:20px;accent-color:#6b8a4c}button,a.primary{font:inherit;font-size:14px;padding:12px 18px;border:1px solid #d9e1d3;background:white;border-radius:10px;cursor:pointer;color:#263824;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:wait}.primary,button.primary{background:#d4ef86;border-color:#c6e575;color:#263824;font-weight:700}.bottom{display:flex;gap:16px;align-items:center;justify-content:space-between}.bottom p{font-size:12px;margin:6px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}#status{font-size:14px}progress{width:100%;accent-color:#6b8a4c}#result{border-top:1px solid #dce4d5;margin-top:25px;padding-top:20px}#output{display:block;max-width:100%;max-height:360px;margin:18px 0;background:#172119;border-radius:12px}footer{margin:35px 0;text-align:center;font-size:12px;color:#7c8577;line-height:1.9}[hidden]{display:none!important}@media(max-width:600px){main{padding:22px 16px}header>span:last-child{display:none}.intro{margin-top:40px}.bottom{align-items:flex-start;flex-direction:column}.workspace{padding:8px}#editor{padding:14px}.heading{flex-direction:column;gap:4px}}
+:root .volume{display:flex;align-items:center;gap:4px;flex-shrink:0}.controls .volume input{width:85px;flex:none}.upload.dragover{background:#e8f5cd;border-color:#6b8a4c;outline:3px solid #d4ef86}@media(max-width:600px){.controls{flex-wrap:wrap}.controls .volume input{width:70px}.controls>input{flex-basis:35%}}
+</style>
+<body><main><header><span class="brand">▣ 쓱 자르기</span><span>짧은 영상, 원하는 부분만.</span></header><section class="intro"><small>DRAG · CROP · SAVE</small><h1>드래그 한 번으로<br>영상이 딱, 원하는 크기로.</h1><p>영상을 불러오고, 남길 부분을 쓱 그려주세요.<br>영상 길이와 소리를 유지해 새 파일로 저장합니다.</p></section>
+<label class="upload" id="upload">＋ 영상 불러오기<input id="file" type="file" accept="video/*"><span>내 컴퓨터의 영상 · 20초 내외 권장</span></label>
+<section id="editor" hidden><div class="heading"><strong id="name"></strong><span id="meta"></span></div><div class="workspace"><div class="stage" id="stage"><video id="video" playsinline preload="auto"></video><canvas id="overlay" aria-label="드래그로 크롭 영역 선택"></canvas></div></div><div class="controls"><button id="play">▶ 재생</button><input id="seek" type="range" min="0" max="1" value="0" step="0.01" aria-label="영상 위치"><span id="time">0:00</span></div><div class="bottom"><div><strong id="size">영상을 드래그해 영역을 선택하세요</strong><p>드래그로 다시 선택 · Esc로 전체 영역 복원</p></div><div class="actions"><button id="reset">전체 영역</button><button class="primary" id="export">잘라서 저장 ↓</button><button id="cancel" hidden>취소</button></div></div></section>
+<p id="status" role="status" aria-live="polite">영상은 서버에 업로드되지 않고 이 브라우저에서 처리됩니다.</p><progress id="progress" max="1" value="0" hidden></progress><section id="result" hidden><h2>잘린 영상이 준비됐어요.</h2><video id="output" controls playsinline></video><a id="download" class="primary">파일 저장 ↓</a></section><footer>자유로운 영역 선택 · 원본 소리 유지 · 브라우저 안에서 처리<br>저장은 영상 길이만큼 걸립니다. 완료될 때까지 이 탭을 열어두세요.<br>지원되는 경우 MP4, 그 외에는 WebM으로 저장됩니다.</footer></main><script>'use strict';
+const $=id=>document.getElementById(id), v=$('video'), layer=$('overlay'), ctx=layer.getContext('2d');
+let crop=null,start=null,busy=false,fileName='video',sourceURL,resultURL,audio,sourceNode,destination,monitorGain,abortExport;
+let previewVolume=1;
+function applyVolume(){if(monitorGain){v.volume=1;monitorGain.gain.value=busy?0:previewVolume;}else v.volume=previewVolume;}
+const volumeWrap=document.createElement('label');volumeWrap.className='volume';volumeWrap.textContent='🔊 ';
+const volumeSlider=document.createElement('input');volumeSlider.type='range';volumeSlider.min='0';volumeSlider.max='1';volumeSlider.step='0.01';volumeSlider.value='1';volumeSlider.setAttribute('aria-label','미리보기 볼륨');volumeSlider.title='미리보기 볼륨 (저장 파일의 소리는 유지)';volumeWrap.append(volumeSlider);$('play').after(volumeWrap);
+volumeSlider.oninput=()=>{previewVolume=Number(volumeSlider.value);applyVolume();volumeWrap.firstChild.textContent=previewVolume===0?'🔇 ':'🔊 ';};
+const status=s=>$('status').textContent=s;
+const format=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+function full(){return {x:0,y:0,w:v.videoWidth,h:v.videoHeight};}
+function draw(){if(!v.videoWidth)return;layer.width=v.videoWidth;layer.height=v.videoHeight;ctx.clearRect(0,0,layer.width,layer.height);if(crop){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,0,layer.width,layer.height);ctx.clearRect(crop.x,crop.y,crop.w,crop.h);ctx.strokeStyle='#d4ef86';ctx.lineWidth=Math.max(2,v.videoWidth/250);ctx.strokeRect(crop.x,crop.y,crop.w,crop.h);}$('size').textContent=crop?`${Math.round(crop.w)} × ${Math.round(crop.h)} px`:'영상을 드래그해 영역을 선택하세요';}
+function point(e){const r=layer.getBoundingClientRect();return {x:Math.max(0,Math.min(v.videoWidth,(e.clientX-r.left)/r.width*v.videoWidth)),y:Math.max(0,Math.min(v.videoHeight,(e.clientY-r.top)/r.height*v.videoHeight))};}
+function reset(){crop=null;draw();}
+layer.onpointerdown=e=>{if(busy||!v.videoWidth)return;v.pause();start=point(e);layer.setPointerCapture(e.pointerId);};
+layer.onpointermove=e=>{if(!start)return;const p=point(e);crop={x:Math.min(start.x,p.x),y:Math.min(start.y,p.y),w:Math.abs(p.x-start.x),h:Math.abs(p.y-start.y)};draw();};
+layer.onpointerup=e=>{if(!start)return;layer.onpointermove(e);start=null;if(crop.w<4||crop.h<4)reset();};
+layer.onpointercancel=()=>{start=null;reset();};
+$('reset').onclick=reset;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy)reset();});
+function loadFile(f){if(!f||busy)return;if(!(f.type.startsWith('video/')||/\.(mp4|webm|mov|m4v|mkv|avi)$/i.test(f.name))){status('영상 파일을 선택해주세요.');return;}v.pause();if(sourceURL)URL.revokeObjectURL(sourceURL);if(resultURL)URL.revokeObjectURL(resultURL);$('output').removeAttribute('src');$('output').load();$('result').hidden=true;fileName=f.name.replace(/\.[^.]+$/,'');sourceURL=URL.createObjectURL(f);v.src=sourceURL;$('editor').hidden=true;crop=null;applyVolume();status('영상을 불러오는 중…');}
+$('file').onchange=()=>loadFile($('file').files[0]);
+$('upload').lastElementChild.textContent='영상 파일을 여기에 끌어놓으세요 · 클릭해서 선택도 가능';
+let dragDepth=0;
+document.addEventListener('dragenter',e=>{if(!Array.from(e.dataTransfer?.types||[]).includes('Files'))return;e.preventDefault();dragDepth++;if(!busy)$('upload').classList.add('dragover');});
+document.addEventListener('dragover',e=>{if(!Array.from(e.dataTransfer?.types||[]).includes('Files'))return;e.preventDefault();e.dataTransfer.dropEffect=busy?'none':'copy';});
+document.addEventListener('dragleave',()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)$('upload').classList.remove('dragover');});
+document.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;$('upload').classList.remove('dragover');if(busy)return;const files=Array.from(e.dataTransfer?.files||[]);if(files.length>1){status('영상은 한 번에 하나씩 끌어놓아 주세요.');return;}loadFile(files[0]);});
+v.onloadedmetadata=()=>{if(!Number.isFinite(v.duration)||v.duration<=0){status('영상 길이를 읽지 못했습니다. 다른 파일을 선택해주세요.');return;}$('editor').hidden=false;$('name').textContent=fileName;$('meta').textContent=`${v.videoWidth} × ${v.videoHeight} · ${format(v.duration)}`;$('seek').max=v.duration;draw();status('영상에서 남길 부분을 드래그한 뒤 “잘라서 저장”을 누르세요.');};
+v.onerror=()=>{status('이 브라우저에서 재생할 수 없는 영상입니다. MP4 또는 WebM 파일을 시도해주세요.');abortExport?.(new Error('영상 재생 오류'));};
+$('play').onclick=async()=>{if(busy)return;if(v.paused){if(audio)await audio.resume();try{await v.play();}catch{status('재생하지 못했습니다. 다른 영상 파일을 선택해주세요.');}}else v.pause();};
+v.onplay=()=>$('play').textContent='Ⅱ 일시정지';v.onpause=()=>$('play').textContent='▶ 재생';v.ontimeupdate=()=>{$('seek').value=v.currentTime;$('time').textContent=format(v.currentTime);if(busy)$('progress').value=v.currentTime/v.duration;};
+$('seek').oninput=()=>{if(!busy)v.currentTime=Number($('seek').value);};
+function lock(on){busy=on;for(const id of ['file','play','seek','reset','export'])$(id).disabled=on;$('cancel').hidden=!on;$('progress').hidden=!on;}
+function seekZero(){return new Promise((resolve,reject)=>{if(v.currentTime===0)return resolve();const timeout=setTimeout(()=>{v.removeEventListener('seeked',done);reject(new Error('영상 시작 위치를 불러오지 못했습니다.'));},10000);function done(){clearTimeout(timeout);resolve();}v.addEventListener('seeked',done,{once:true});v.currentTime=0;});}
+$('cancel').onclick=()=>abortExport?.(new Error('저장을 취소했습니다.'));
+$('export').onclick=async()=>{
+ if(busy||!v.videoWidth)return;
+ if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){status('최신 Chrome 또는 Edge에서 열어주세요.');return;}
+ const area=crop||full(), box={x:Math.floor(area.x),y:Math.floor(area.y),w:Math.floor(area.w/2)*2,h:Math.floor(area.h/2)*2};
+ if(box.w<2||box.h<2){status('조금 더 큰 영역을 선택해주세요.');return;}
+ lock(true);$('progress').value=0;$('result').hidden=true;status('저장 중… 완료될 때까지 이 탭을 열어두세요.');
+ const canvas=document.createElement('canvas');canvas.width=box.w;canvas.height=box.h;const c=canvas.getContext('2d');let stream,rec,raf,timer,recordingError;
+ const before=v.currentTime;
+ try{
+  v.pause();v.playbackRate=1;await seekZero();
+  if(!audio){audio=new AudioContext();sourceNode=audio.createMediaElementSource(v);destination=audio.createMediaStreamDestination();monitorGain=audio.createGain();sourceNode.connect(destination);sourceNode.connect(monitorGain);monitorGain.connect(audio.destination);}applyVolume();await audio.resume();
+  const paint=()=>{c.drawImage(v,box.x,box.y,box.w,box.h,0,0,box.w,box.h);raf=requestAnimationFrame(paint);};paint();stream=canvas.captureStream(30);for(const track of destination.stream.getAudioTracks())stream.addTrack(track.clone());
+  const mime=['video/mp4;codecs=avc1.42001E,mp4a.40.2','video/webm;codecs=vp8,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!mime)throw new Error('이 브라우저는 영상 저장 형식을 지원하지 않습니다.');
+  rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:6000000,audioBitsPerSecond:128000});const chunks=[];
+  const blob=await new Promise((resolve,reject)=>{
+   const stop=err=>{if(err)recordingError=err;v.pause();if(rec.state!=='inactive')rec.stop();else reject(err||new Error('녹화를 시작하지 못했습니다.'));};abortExport=stop;
+   v.onended=()=>stop();rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};rec.onerror=e=>stop(e.error||new Error('저장 오류'));rec.onstop=()=>recordingError?reject(recordingError):resolve(new Blob(chunks,{type:rec.mimeType}));
+   timer=setTimeout(()=>stop(new Error('처리 시간이 초과됐습니다. 탭을 열어두고 다시 시도해주세요.')),(v.duration+30)*1000);rec.start(250);v.play().catch(stop);
+  });
+  if(blob.size<100)throw new Error('영상 저장에 실패했습니다. 다시 시도해주세요.');if(resultURL)URL.revokeObjectURL(resultURL);resultURL=URL.createObjectURL(blob);$('output').src=resultURL;const a=$('download');a.href=resultURL;a.download=`${fileName}-crop-${box.w}x${box.h}.${blob.type.includes('mp4')?'mp4':'webm'}`;$('result').hidden=false;a.click();status('완료! 다운로드가 시작됐습니다. 아래에서 결과를 확인하거나 다시 저장하세요.');
+ }catch(e){status(e.message||'저장하지 못했습니다. 다시 시도해주세요.');}
+ finally{clearTimeout(timer);cancelAnimationFrame(raf);v.pause();v.onended=null;abortExport=null;stream?.getTracks().forEach(t=>t.stop());lock(false);applyVolume();v.currentTime=Math.min(before,v.duration||0);}
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&busy)abortExport?.(new Error('탭을 벗어나 저장을 중단했습니다. 이 탭을 열어둔 채 다시 저장해주세요.'));});
+</script></body></html>
