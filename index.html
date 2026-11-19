@@ -1,6 +1,163 @@
-<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>영상 쓱 자르기</title><style>:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#202820;background:#f6f7f2}*{box-sizing:border-box}body{margin:0}main{max-width:1050px;margin:auto;padding:32px 28px}header{display:flex;justify-content:space-between;align-items:center;color:#747d72;font-size:14px}.brand{font-size:20px;font-weight:800;color:#233b29}.intro{margin:65px 0 32px}.intro small{letter-spacing:3px;color:#65815b;font-weight:700}h1{font-size:clamp(32px,5vw,52px);line-height:1.25;letter-spacing:-2px;margin:16px 0}p{line-height:1.7;color:#737a70}.upload{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;border:2px dashed #b8c5b0;border-radius:20px;padding:32px;background:#fff;cursor:pointer;font-weight:700;font-size:20px}.upload span{font-size:13px;font-weight:400;color:#798071}.upload input{position:absolute;width:1px;height:1px;opacity:0}.upload:focus-within{outline:3px solid #69875a}#editor{background:white;border:1px solid #dfe5d9;border-radius:20px;margin-top:24px;padding:22px}.heading{display:flex;gap:16px;justify-content:space-between;margin-bottom:18px;font-size:14px;overflow-wrap:anywhere}.heading span{color:#7c8577}.workspace{background:#172119;border-radius:14px;display:flex;justify-content:center;padding:20px}.stage{position:relative;max-width:100%;line-height:0;touch-action:none}.stage video{display:block;max-width:100%;max-height:480px;width:auto;height:auto}#overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}.controls{display:flex;align-items:center;gap:14px;margin:18px 0}.controls input{flex:1;min-width:20px;accent-color:#6b8a4c}button,a.primary{font:inherit;font-size:14px;padding:12px 18px;border:1px solid #d9e1d3;background:white;border-radius:10px;cursor:pointer;color:#263824;text-decoration:none;display:inline-block}button:disabled{opacity:.5;cursor:wait}.primary,button.primary{background:#d4ef86;border-color:#c6e575;color:#263824;font-weight:700}.bottom{display:flex;gap:16px;align-items:center;justify-content:space-between}.bottom p{font-size:12px;margin:6px 0}.actions{display:flex;gap:8px;flex-wrap:wrap}#status{font-size:14px}progress{width:100%;accent-color:#6b8a4c}#result{border-top:1px solid #dce4d5;margin-top:25px;padding-top:20px}#output{display:block;max-width:100%;max-height:360px;margin:18px 0;background:#172119;border-radius:12px}footer{margin:35px 0;text-align:center;font-size:12px;color:#7c8577;line-height:1.9}[hidden]{display:none!important}@media(max-width:600px){main{padding:22px 16px}header>span:last-child{display:none}.intro{margin-top:40px}.bottom{align-items:flex-start;flex-direction:column}.workspace{padding:8px}#editor{padding:14px}.heading{flex-direction:column;gap:4px}}
-:root .volume{display:flex;align-items:center;gap:4px;flex-shrink:0}.controls .volume input{width:85px;flex:none}.upload.dragover{background:#e8f5cd;border-color:#6b8a4c;outline:3px solid #d4ef86}@media(max-width:600px){.controls{flex-wrap:wrap}.controls .volume input{width:70px}.controls>input{flex-basis:35%}}
-</style>
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>영상 쓱 자르기</title><style>:root{
+  color-scheme:dark;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:#f0f3e9;
+  background:#10120f;
+  --bg:#10120f;
+  --panel:#181c17;
+  --panel-2:#20261e;
+  --line:#343d30;
+  --muted:#a3ac9b;
+  --accent:#d5ef83;
+  --accent-ink:#202819;
+}
+*{box-sizing:border-box}
+html{min-height:100%;background:var(--bg)}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(ellipse at 12% 0%,rgba(139,169,86,.12),transparent 34rem),
+    radial-gradient(ellipse at 100% 35%,rgba(89,111,62,.09),transparent 32rem),
+    var(--bg);
+}
+main{max-width:1120px;margin:auto;padding:30px 34px 42px}
+header{
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+  padding:10px 0 22px;border-bottom:1px solid rgba(201,218,176,.15);
+  color:var(--muted);font-size:13px;letter-spacing:.02em
+}
+.brand{
+  display:inline-flex;align-items:center;gap:9px;
+  color:#f4f6ef;font-size:18px;font-weight:760;letter-spacing:-.04em
+}
+.brand::first-letter{color:var(--accent)}
+header>span:last-child{display:flex;align-items:center;gap:8px}
+header>span:last-child::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 12px rgba(213,239,131,.7)
+}
+.intro{margin:58px 0 30px}
+.intro small{
+  display:inline-flex;align-items:center;gap:8px;
+  color:var(--accent);font-size:11px;font-weight:750;letter-spacing:.18em
+}
+.intro small::before{content:"";width:24px;height:1px;background:var(--accent);opacity:.8}
+h1{
+  max-width:850px;margin:18px 0 14px;
+  color:#f4f6ef;font-size:clamp(36px,6vw,64px);line-height:1.12;
+  letter-spacing:-.065em;font-weight:740
+}
+p{max-width:650px;margin:0;color:var(--muted);font-size:15px;line-height:1.8}
+.upload{
+  position:relative;display:flex;min-height:170px;align-items:center;justify-content:center;
+  flex-direction:column;gap:10px;padding:30px;
+  border:1px dashed #526044;border-radius:18px;
+  background:linear-gradient(135deg,rgba(213,239,131,.055),rgba(255,255,255,.015) 48%,rgba(213,239,131,.035));
+  color:#f3f5ed;cursor:pointer;font-weight:720;font-size:18px;
+  transition:border-color .2s ease,background .2s ease,transform .2s ease,box-shadow .2s ease
+}
+.upload::before{
+  content:"＋";display:grid;place-items:center;width:44px;height:44px;margin-bottom:3px;
+  border:1px solid rgba(213,239,131,.35);border-radius:14px;background:rgba(213,239,131,.1);
+  color:var(--accent);font-size:24px;font-weight:400
+}
+.upload:hover,.upload.dragover{
+  border-color:var(--accent);background:rgba(213,239,131,.09);
+  box-shadow:0 0 0 4px rgba(213,239,131,.07);transform:translateY(-1px)
+}
+.upload span{color:var(--muted);font-size:13px;font-weight:450}
+.upload input{position:absolute;width:1px;height:1px;opacity:0}
+.upload:focus-within{outline:2px solid var(--accent);outline-offset:4px}
+#editor{
+  margin-top:22px;padding:22px;border:1px solid var(--line);border-radius:20px;
+  background:linear-gradient(160deg,rgba(33,39,30,.98),rgba(23,27,22,.98));
+  box-shadow:0 24px 70px rgba(0,0,0,.23)
+}
+.heading{
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+  margin-bottom:16px;font-size:14px;overflow-wrap:anywhere
+}
+.heading strong{color:#f2f4ec;font-size:15px;font-weight:700}
+.heading span{
+  padding:7px 10px;border:1px solid var(--line);border-radius:999px;
+  color:var(--muted);font-size:12px;white-space:nowrap
+}
+.workspace{
+  display:flex;justify-content:center;overflow:hidden;padding:18px;
+  border:1px solid rgba(201,218,176,.1);border-radius:15px;
+  background:
+    linear-gradient(45deg,#1c211a 25%,transparent 25%,transparent 75%,#1c211a 75%),
+    linear-gradient(45deg,#1c211a 25%,transparent 25%,transparent 75%,#1c211a 75%),#141713;
+  background-position:0 0,10px 10px;background-size:20px 20px
+}
+.stage{position:relative;max-width:100%;line-height:0;touch-action:none}
+.stage video{display:block;max-width:100%;max-height:520px;width:auto;height:auto;border-radius:5px}
+#overlay{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.controls{display:flex;align-items:center;gap:12px;margin:16px 0 20px}
+.controls input{flex:1;min-width:20px;accent-color:var(--accent)}
+.controls>span{min-width:38px;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+button,a.primary{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:42px;padding:10px 15px;border:1px solid var(--line);border-radius:11px;
+  background:#20261f;color:#edf1e6;text-decoration:none;font:inherit;font-size:13px;
+  font-weight:620;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease
+}
+button:hover:not(:disabled),a.primary:hover{border-color:#69775b;background:#293127;transform:translateY(-1px)}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+button:disabled{opacity:.48;cursor:wait}
+.primary,button.primary{
+  border-color:var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:760
+}
+.primary:hover:not(:disabled),button.primary:hover:not(:disabled){border-color:#e5f6af;background:#e5f6af}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.bottom strong{color:#edf1e6;font-size:14px}
+.bottom p{margin-top:5px;font-size:12px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+#status{
+  display:flex;align-items:center;gap:10px;margin:18px 0 0;padding:12px 14px;
+  border:1px solid rgba(201,218,176,.12);border-radius:12px;
+  background:rgba(255,255,255,.025);color:#b8c0b1;font-size:13px;line-height:1.55
+}
+#status::before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--accent)}
+progress{display:block;width:100%;height:7px;margin-top:14px;overflow:hidden;border:0;border-radius:99px;accent-color:var(--accent)}
+progress::-webkit-progress-bar{background:#2b3228;border-radius:99px}
+progress::-webkit-progress-value{background:var(--accent);border-radius:99px}
+#result{margin-top:22px;padding-top:22px;border-top:1px solid var(--line)}
+#result h2{margin:0;color:#f2f4ec;font-size:22px;letter-spacing:-.03em}
+#output{
+  display:block;max-width:100%;max-height:420px;margin:18px 0;
+  border:1px solid var(--line);border-radius:14px;background:#0a0c0a
+}
+footer{
+  margin:28px 0 0;padding-top:18px;border-top:1px solid rgba(201,218,176,.12);
+  color:#818b7a;text-align:center;font-size:12px;line-height:1.9
+}
+[hidden]{display:none!important}
+:root .volume{display:flex;align-items:center;gap:5px;flex-shrink:0;color:var(--muted);font-size:12px}
+.controls .volume input{width:88px;flex:none}
+@media(max-width:680px){
+  main{padding:20px 16px 30px}
+  header{padding-bottom:17px}
+  header>span:last-child{font-size:11px}
+  .intro{margin:40px 0 24px}
+  h1{font-size:clamp(34px,10vw,48px);letter-spacing:-.055em}
+  .intro p{font-size:14px}
+  .upload{min-height:148px;padding:24px 16px;text-align:center}
+  #editor{padding:13px;border-radius:16px}
+  .heading{align-items:flex-start;flex-direction:column;gap:7px}
+  .workspace{padding:8px;border-radius:11px}
+  .stage video{max-height:58vh}
+  .controls{flex-wrap:wrap;gap:9px;margin:13px 0 17px}
+  .controls>input{flex-basis:35%}
+  .controls .volume input{width:68px}
+  .bottom{align-items:flex-start;flex-direction:column}
+  .actions{width:100%}
+  .actions button{flex:1}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+}</style>
 <body><main><header><span class="brand">▣ 쓱 자르기</span><span>짧은 영상, 원하는 부분만.</span></header><section class="intro"><small>DRAG · CROP · SAVE</small><h1>드래그 한 번으로<br>영상이 딱, 원하는 크기로.</h1><p>영상을 불러오고, 남길 부분을 쓱 그려주세요.<br>영상 길이와 소리를 유지해 새 파일로 저장합니다.</p></section>
 <label class="upload" id="upload">＋ 영상 불러오기<input id="file" type="file" accept="video/*"><span>내 컴퓨터의 영상 · 20초 내외 권장</span></label>
 <section id="editor" hidden><div class="heading"><strong id="name"></strong><span id="meta"></span></div><div class="workspace"><div class="stage" id="stage"><video id="video" playsinline preload="auto"></video><canvas id="overlay" aria-label="드래그로 크롭 영역 선택"></canvas></div></div><div class="controls"><button id="play">▶ 재생</button><input id="seek" type="range" min="0" max="1" value="0" step="0.01" aria-label="영상 위치"><span id="time">0:00</span></div><div class="bottom"><div><strong id="size">영상을 드래그해 영역을 선택하세요</strong><p>드래그로 다시 선택 · Esc로 전체 영역 복원</p></div><div class="actions"><button id="reset">전체 영역</button><button class="primary" id="export">잘라서 저장 ↓</button><button id="cancel" hidden>취소</button></div></div></section>
