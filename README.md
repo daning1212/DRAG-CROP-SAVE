@@ -7,7 +7,9 @@
 파일을 불러오고, 남길 부분을 드래그하고, 저장하세요. 설치도, 로그인도, 서버 업로드도 없이 내 컴퓨터의 브라우저에서 영상 화면을 자유롭게 잘라냅니다.
 
 ## 새 화면 디자인
-<img width="575" height="402" alt="crop-tool-interface" src="https://github.com/user-attachments/assets/df1c4235-fecf-40e3-9b5c-20feda82786e" />
+<p align="center">
+  <img width="575" height="402" alt="쓱 자르기 새 인터페이스" src="https://github.com/user-attachments/assets/df1c4235-fecf-40e3-9b5c-20feda82786e" />
+</p>
 
 화면을 차콜 톤과 라임 포인트로 새롭게 정리했습니다. 영상 불러오기 영역, 편집 패널, 미리보기와 저장 버튼을 한눈에 구분하고, 작은 화면에서도 쓰기 편하도록 반응형으로 구성했습니다.
 
