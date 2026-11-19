@@ -58,7 +58,7 @@ p{max-width:650px;margin:0;color:var(--muted);font-size:15px;line-height:1.8}
   transition:border-color .2s ease,background .2s ease,transform .2s ease,box-shadow .2s ease
 }
 .upload::before{
-  content:"＋";display:grid;place-items:center;width:44px;height:44px;margin-bottom:3px;
+  content:"↑";display:grid;place-items:center;width:44px;height:44px;margin-bottom:3px;
   border:1px solid rgba(213,239,131,.35);border-radius:14px;background:rgba(213,239,131,.1);
   color:var(--accent);font-size:24px;font-weight:400
 }
